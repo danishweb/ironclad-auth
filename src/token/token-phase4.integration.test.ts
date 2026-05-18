@@ -60,7 +60,7 @@ describe.skipIf(!hasDb)("token exchange + userinfo (database)", () => {
 			keyEncryptionSecret: cfg.KEY_ENCRYPTION_SECRET,
 		});
 
-		const sub = "auth0|seed|admin-acme";
+		const sub = "seed|admin-acme";
 		const now = Math.floor(Date.now() / 1000);
 		validToken = await new SignJWT({})
 			.setProtectedHeader({ alg: "RS256", kid })
@@ -147,7 +147,7 @@ describe.skipIf(!hasDb)("token exchange + userinfo (database)", () => {
 			orgs: string[];
 			applications: Record<string, Record<string, { privileges: string[] }>>;
 		};
-		expect(info.idp_sub).toBe("auth0|seed|admin-acme");
+		expect(info.idp_sub).toBe("seed|admin-acme");
 		expect(info.applications.billing?.["acme-corp"]?.privileges).toContain(
 			"read:reports",
 		);
