@@ -2,6 +2,7 @@ import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
 	boolean,
 	index,
+	jsonb,
 	pgTable,
 	primaryKey,
 	text,
@@ -154,3 +155,25 @@ export const membershipOrgUnits = pgTable(
 	},
 	(t) => [primaryKey({ columns: [t.membershipId, t.orgUnitId] })],
 );
+
+export const apiKeys = pgTable("api_keys", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	type: text("type").notNull(),
+	ownerId: uuid("owner_id").notNull(),
+	appOrgId: uuid("app_org_id").references(() => appsOrgs.id, {
+		onDelete: "cascade",
+	}),
+	secretHash: text("secret_hash").notNull().unique(),
+	name: text("name").notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true }),
+	revokedAt: timestamp("revoked_at", { withTimezone: true }),
+	lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+});
+
+export const signingKeys = pgTable("signing_keys", {
+	kid: text("kid").primaryKey(),
+	privateKeyEnc: text("private_key_enc").notNull(),
+	publicJwk: jsonb("public_jwk").notNull(),
+	isActive: boolean("is_active").notNull().default(false),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
