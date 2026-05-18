@@ -1,45 +1,45 @@
 # Agent workflow
 
-This repo is set up so an automated agent can validate changes **without a human clicking through a browser**, using the same checks CI runs.
+Automated agents (and humans) should validate work the same way **GitHub Actions** does: one scripted path, no tribal knowledge.
+
+## Contract
+
+The source of truth is **`.github/workflows/ci.yml`** — `pnpm run ci:core` mirrors that job’s check steps (migrate → seed → lint → build → test → Playwright browser install → E2E). Environment defaults for `DATABASE_URL`, `KEY_ENCRYPTION_SECRET`, and `IRONCLAD_*` match the workflow when unset.
+
+E2E starts the app via Playwright `webServer`. When **`E2E_SKIP_DB_PREP=1`** (set automatically inside `ci:core` and on the CI `pnpm e2e` step), **`e2e/run-stack.ts` does not run migrate/seed again** — the database was already prepared in the same pipeline.
+
+If you run **`pnpm e2e` alone** (without `ci:core`), migrate/seed still run inside `run-stack` so a quick E2E loop works without a separate DB step.
 
 ## One command (recommended)
 
-From the repository root, with Docker available (for Postgres):
+From the repository root, with Docker available if you rely on the default `DATABASE_URL`:
 
 ```bash
 pnpm install
-pnpm verify:agent
+pnpm verify
 ```
 
-`verify:agent` will:
+`pnpm verify` runs **`pnpm db:ensure`** (start `docker compose` Postgres when `DATABASE_URL` is unset, matching `docker-compose.yml`) and then **`pnpm run ci:core`**.
 
-1. Ensure Postgres is up (`docker compose up -d postgres` when `DATABASE_URL` is not set, using the default URL that matches `docker-compose.yml`).
-2. Run migrations and seed data.
-3. Install the Playwright Chromium browser if needed.
-4. Run lint, TypeScript build, Vitest, and Playwright API + smoke tests (including a live stack with a local mock IdP).
+`pnpm verify:agent` is an alias for **`pnpm verify`**.
 
-If you already have Postgres elsewhere, set `DATABASE_URL` first; the script will **not** start Docker in that case.
-
-## Individual steps
+## Individual commands
 
 | Command | Purpose |
 | --- | --- |
+| `pnpm run ci:core` | Full CI check sequence; requires Postgres reachable (does not run `db:ensure`) |
+| `pnpm db:ensure` | Ensure Postgres via Docker when `DATABASE_URL` is unset |
 | `pnpm lint` | Biome |
 | `pnpm build` | `tsc` |
 | `pnpm test` | Vitest |
-| `pnpm e2e` | Playwright (expects DB + built `dist/`; stack is started by Playwright `webServer`) |
-| `pnpm e2e:install` | Download Chromium for Playwright |
-| `pnpm db:ensure` | Only ensure Postgres (Docker or existing URL) |
-
-## CI parity
-
-GitHub Actions runs migrate, seed, lint, build, test, Playwright browser install, then `pnpm e2e`. Matching that locally is `pnpm verify:agent` (or the same sequence manually).
+| `pnpm e2e` | Playwright (starts stack via `webServer`; runs migrate/seed unless `E2E_SKIP_DB_PREP=1`) |
+| `pnpm e2e:install` | `playwright install chromium --with-deps` only |
 
 ## Optional faster iteration
 
-- Reuse an already-running stack: set `PLAYWRIGHT_REUSE=1` when running `pnpm e2e` (see `playwright.config.ts`).
-- Skip Docker: provide `DATABASE_URL` to your own Postgres instance.
+- Reuse an already-running stack: **`PLAYWRIGHT_REUSE=1`** when running `pnpm e2e` (see `playwright.config.ts`).
+- Use your own Postgres: set **`DATABASE_URL`**; `db:ensure` will not start Docker.
 
 ## Windows and shells
 
-`pnpm verify:agent` uses `sh` for a default `DATABASE_URL`. Use Git Bash, WSL, or run the same commands manually in an environment where `sh` and `docker compose` are available.
+`ci:core` uses **`sh`**. Use Git Bash, WSL, or run the same commands from `.github/workflows/ci.yml` manually in your shell.

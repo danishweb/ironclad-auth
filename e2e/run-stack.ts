@@ -17,8 +17,13 @@ process.env.E2E_MINT_TOKENS = "1";
 const mock = await startMockIdp(MOCK_PORT);
 const cwd = process.cwd();
 
-execSync("pnpm db:migrate", { stdio: "inherit", cwd, env: process.env });
-execSync("pnpm db:seed", { stdio: "inherit", cwd, env: process.env });
+const skipDbPrep = process.env.E2E_SKIP_DB_PREP === "1";
+if (skipDbPrep) {
+	console.log("e2e/run-stack: skipping migrate/seed (E2E_SKIP_DB_PREP=1)");
+} else {
+	execSync("pnpm db:migrate", { stdio: "inherit", cwd, env: process.env });
+	execSync("pnpm db:seed", { stdio: "inherit", cwd, env: process.env });
+}
 
 const appEnv: NodeJS.ProcessEnv = {
 	...process.env,
