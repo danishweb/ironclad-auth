@@ -177,3 +177,15 @@ export const signingKeys = pgTable("signing_keys", {
 	isActive: boolean("is_active").notNull().default(false),
 	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const auditLogs = pgTable("audit_logs", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	actorId: uuid("actor_id").notNull(),
+	actorType: text("actor_type").notNull(),
+	event: text("event").notNull(),
+	targetType: text("target_type").notNull(),
+	targetId: text("target_id").notNull(),
+	metadata: jsonb("metadata"),
+	ip: text("ip"),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
