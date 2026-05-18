@@ -61,4 +61,19 @@ GitHub cannot learn branch protection from a file in this repository. A **repo a
 - **No direct pushes to `main`** ensures every change goes through PR + CI + review.
 - **Required checks** mean `pnpm lint`, `pnpm build`, `pnpm test`, and database steps in CI must pass before merge.
 
+### Automatically delete head branches after merge
+
+This is a **repository setting**, not part of a ruleset.
+
+1. GitHub → **Settings** → **General** → **Pull requests**.
+2. Enable **Automatically delete head branches**.
+
+After each merged PR, GitHub deletes the **remote** PR branch. Contributors should prune locally occasionally (`git fetch --prune`).
+
+**API (repo admin):** `PATCH /repos/{owner}/{repo}` with body:
+
+```json
+{ "delete_branch_on_merge": true }
+```
+
 If something in this guide is unclear, open a PR to improve this file.
