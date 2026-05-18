@@ -4,7 +4,7 @@ import { createApp } from "./app.js";
 import { createAuth0IdpAdapter } from "./auth/auth0.adapter.js";
 import { loadIdpEnv } from "./auth/idp-env.js";
 import { JwksFetcher } from "./auth/jwks-client.js";
-import { db } from "./db/client.js";
+import { db, listenSql } from "./db/client.js";
 
 const idpEnv = loadIdpEnv();
 const jwks = new JwksFetcher(idpEnv.IDP_JWKS_URI);
@@ -14,7 +14,7 @@ const idp = createAuth0IdpAdapter({
 	getKey: jwks.getKey,
 });
 
-const app = createApp({ db, idp });
+const app = createApp({ db, idp, listenSql });
 
 const port = Number(process.env.PORT) || 3000;
 
