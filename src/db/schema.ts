@@ -1,6 +1,8 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
+	boolean,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	unique,
@@ -63,4 +65,45 @@ export const appsOrgs = pgTable(
 		status: text("status").notNull().default("active"),
 	},
 	(t) => [unique("apps_orgs_app_org_unique").on(t.appId, t.orgId)],
+);
+
+export const roles = pgTable(
+	"roles",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		appId: uuid("app_id")
+			.references(() => apps.id, { onDelete: "cascade" })
+			.notNull(),
+		code: text("code").notNull(),
+		name: text("name").notNull(),
+		isDefault: boolean("is_default").notNull().default(false),
+		isSensitive: boolean("is_sensitive").notNull().default(false),
+	},
+	(t) => [unique("roles_app_code_unique").on(t.appId, t.code)],
+);
+
+export const privileges = pgTable(
+	"privileges",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		appId: uuid("app_id")
+			.references(() => apps.id, { onDelete: "cascade" })
+			.notNull(),
+		code: text("code").notNull(),
+		name: text("name").notNull(),
+	},
+	(t) => [unique("privileges_app_code_unique").on(t.appId, t.code)],
+);
+
+export const rolePrivileges = pgTable(
+	"role_privileges",
+	{
+		roleId: uuid("role_id")
+			.references(() => roles.id, { onDelete: "cascade" })
+			.notNull(),
+		privilegeId: uuid("privilege_id")
+			.references(() => privileges.id, { onDelete: "cascade" })
+			.notNull(),
+	},
+	(t) => [primaryKey({ columns: [t.roleId, t.privilegeId] })],
 );
