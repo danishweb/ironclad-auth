@@ -29,6 +29,13 @@
       "when": 1779093930713,
       "tag": "0003_rbac_roles_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779093954077,
+      "tag": "0004_memberships_org_units",
+      "breakpoints": true
     }
   ]
 }

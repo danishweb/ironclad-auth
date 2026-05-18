@@ -1,6 +1,7 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
 	boolean,
+	index,
 	pgTable,
 	primaryKey,
 	text,
@@ -106,4 +107,50 @@ export const rolePrivileges = pgTable(
 			.notNull(),
 	},
 	(t) => [primaryKey({ columns: [t.roleId, t.privilegeId] })],
+);
+
+export const memberships = pgTable(
+	"memberships",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: uuid("user_id")
+			.references(() => users.id, { onDelete: "cascade" })
+			.notNull(),
+		appOrgId: uuid("app_org_id")
+			.references(() => appsOrgs.id, { onDelete: "cascade" })
+			.notNull(),
+		roleId: uuid("role_id")
+			.references(() => roles.id, { onDelete: "restrict" })
+			.notNull(),
+		status: text("status").notNull().default("active"),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [index("memberships_user_app_org_idx").on(t.userId, t.appOrgId)],
+);
+
+export const orgUnits = pgTable(
+	"org_units",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		appOrgId: uuid("app_org_id")
+			.references(() => appsOrgs.id, { onDelete: "cascade" })
+			.notNull(),
+		code: text("code").notNull(),
+		name: text("name").notNull(),
+		status: text("status").notNull().default("active"),
+	},
+	(t) => [unique("org_units_app_org_code_unique").on(t.appOrgId, t.code)],
+);
+
+export const membershipOrgUnits = pgTable(
+	"membership_org_units",
+	{
+		membershipId: uuid("membership_id")
+			.references(() => memberships.id, { onDelete: "cascade" })
+			.notNull(),
+		orgUnitId: uuid("org_unit_id")
+			.references(() => orgUnits.id, { onDelete: "cascade" })
+			.notNull(),
+	},
+	(t) => [primaryKey({ columns: [t.membershipId, t.orgUnitId] })],
 );
