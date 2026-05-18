@@ -20,11 +20,13 @@ pnpm dev
 
 ## Docker
 
+Builds a production image (Node 22 Alpine, non-root `node` user).
+
 ```bash
 docker compose up --build
 ```
 
-Postgres is included for local development; the app does not require a database connection in Phase 0.
+Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. `DATABASE_URL` is injected for later phases; the Phase 0 server does not connect to the database yet.
 
 ## Scripts
 
