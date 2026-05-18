@@ -1,0 +1,2 @@
+CREATE INDEX "provider_links_user_id_idx" ON "provider_links" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "role_privileges_privilege_id_idx" ON "role_privileges" USING btree ("privilege_id");

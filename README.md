@@ -9,8 +9,11 @@ Node 22, TypeScript (strict), Hono, `@hono/zod-openapi`, Drizzle + Postgres (fro
 ## Local dev
 
 ```bash
-cp .env.example .env   # optional; defaults work for PORT
+cp .env.example .env   # sets PORT + DATABASE_URL for docker-compose Postgres
 pnpm install
+docker compose up -d postgres   # or use your own Postgres 16+
+pnpm db:migrate
+pnpm db:seed
 pnpm dev
 ```
 
@@ -26,7 +29,7 @@ Builds a production image (Node 22 Alpine, non-root `node` user).
 docker compose up --build
 ```
 
-Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. `DATABASE_URL` is injected for later phases; the Phase 0 server does not connect to the database yet.
+Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. Set `DATABASE_URL` in `.env` to match `docker-compose.yml` credentials when running migrations or the app locally.
 
 ## Scripts
 
@@ -37,6 +40,9 @@ Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. `DAT
 | `pnpm start`  | Run compiled app         |
 | `pnpm test`   | Run tests                |
 | `pnpm lint`   | Biome check              |
+| `pnpm db:generate` | Create SQL migrations from `src/db/schema.ts` (dev) |
+| `pnpm db:migrate` | Apply migrations (`DATABASE_URL` required)        |
+| `pnpm db:seed`    | Load demo org/app/user/RBAC rows (idempotent)      |
 
 ## License
 
