@@ -1,3 +1,4 @@
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
 	pgTable,
 	text,
@@ -30,4 +31,36 @@ export const providerLinks = pgTable(
 	(t) => [
 		unique("provider_links_provider_provider_sub_unique").on(t.provider, t.providerSub),
 	],
+);
+
+export const orgs = pgTable("orgs", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	code: text("code").notNull().unique(),
+	name: text("name").notNull(),
+	parentId: uuid("parent_id").references((): AnyPgColumn => orgs.id, {
+		onDelete: "set null",
+	}),
+	status: text("status").notNull().default("active"),
+});
+
+export const apps = pgTable("apps", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	code: text("code").notNull().unique(),
+	name: text("name").notNull(),
+	status: text("status").notNull().default("active"),
+});
+
+export const appsOrgs = pgTable(
+	"apps_orgs",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		appId: uuid("app_id")
+			.references(() => apps.id, { onDelete: "cascade" })
+			.notNull(),
+		orgId: uuid("org_id")
+			.references(() => orgs.id, { onDelete: "cascade" })
+			.notNull(),
+		status: text("status").notNull().default("active"),
+	},
+	(t) => [unique("apps_orgs_app_org_unique").on(t.appId, t.orgId)],
 );

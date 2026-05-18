@@ -15,6 +15,13 @@
       "when": 1779093876385,
       "tag": "0001_provider_links",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779093906392,
+      "tag": "0002_orgs_apps_apps_orgs",
+      "breakpoints": true
     }
   ]
 }
