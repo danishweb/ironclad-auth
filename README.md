@@ -20,6 +20,13 @@ pnpm dev
 - Health: `GET http://localhost:3000/healthz`
 - API docs: `http://localhost:3000/docs`
 - OpenAPI JSON: `http://localhost:3000/openapi.json`
+- With IdP env set: `GET http://localhost:3000/v1/whoami` with `Authorization: Bearer <IdP access token>` returns the linked internal `userId` and IdP `sub`.
+
+## Identity provider (Phase 2)
+
+The process entrypoint validates **OIDC access tokens** from your IdP (Auth0 by default) using **`IDP_ISSUER`**, **`IDP_AUDIENCE`**, and **`IDP_JWKS_URI`**. JWKS keys are re-fetched on a background interval in normal runtime (skipped under Vitest to avoid open handles).
+
+Set the three `IDP_*` variables in `.env` (see `.env.example`). On first successful verification of a subject, a **`users`** row and **`provider_links`** row are created automatically.
 
 ## Docker
 
