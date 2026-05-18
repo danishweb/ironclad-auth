@@ -14,4 +14,7 @@ const connectionString = requireDatabaseUrl();
 
 export const sql = postgres(connectionString, { max: 10 });
 
+/** Dedicated client for `LISTEN` (single connection; do not use for queries). */
+export const listenSql = postgres(connectionString, { max: 1 });
+
 export const db = drizzle(sql, { schema });
