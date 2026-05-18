@@ -1,3 +1,4 @@
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
 	boolean,
@@ -16,8 +17,12 @@ export const users = pgTable("users", {
 	email: text("email").notNull().unique(),
 	displayName: text("display_name"),
 	status: text("status").notNull().default("active"),
-	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
 });
 
 export const providerLinks = pgTable(
@@ -30,10 +35,15 @@ export const providerLinks = pgTable(
 			.references(() => users.id, { onDelete: "cascade" })
 			.notNull(),
 		email: text("email"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
 	},
 	(t) => [
-		unique("provider_links_provider_provider_sub_unique").on(t.provider, t.providerSub),
+		unique("provider_links_provider_provider_sub_unique").on(
+			t.provider,
+			t.providerSub,
+		),
 		index("provider_links_user_id_idx").on(t.userId),
 	],
 );
@@ -128,7 +138,9 @@ export const memberships = pgTable(
 			.references(() => roles.id, { onDelete: "restrict" })
 			.notNull(),
 		status: text("status").notNull().default("active"),
-		createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
 	},
 	(t) => [index("memberships_user_app_org_idx").on(t.userId, t.appOrgId)],
 );
@@ -179,7 +191,9 @@ export const signingKeys = pgTable("signing_keys", {
 	privateKeyEnc: text("private_key_enc").notNull(),
 	publicJwk: jsonb("public_jwk").notNull(),
 	isActive: boolean("is_active").notNull().default(false),
-	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
 });
 
 export const auditLogs = pgTable("audit_logs", {
@@ -191,5 +205,23 @@ export const auditLogs = pgTable("audit_logs", {
 	targetId: text("target_id").notNull(),
 	metadata: jsonb("metadata"),
 	ip: text("ip"),
-	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
 });
+
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+export type ProviderLink = InferSelectModel<typeof providerLinks>;
+export type Org = InferSelectModel<typeof orgs>;
+export type App = InferSelectModel<typeof apps>;
+export type AppOrg = InferSelectModel<typeof appsOrgs>;
+export type Role = InferSelectModel<typeof roles>;
+export type Privilege = InferSelectModel<typeof privileges>;
+export type RolePrivilege = InferSelectModel<typeof rolePrivileges>;
+export type Membership = InferSelectModel<typeof memberships>;
+export type OrgUnit = InferSelectModel<typeof orgUnits>;
+export type MembershipOrgUnit = InferSelectModel<typeof membershipOrgUnits>;
+export type ApiKey = InferSelectModel<typeof apiKeys>;
+export type SigningKey = InferSelectModel<typeof signingKeys>;
+export type AuditLog = InferSelectModel<typeof auditLogs>;
