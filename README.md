@@ -51,6 +51,10 @@ Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. Set 
 | `pnpm db:migrate` | Apply migrations (`DATABASE_URL` required)        |
 | `pnpm db:seed`    | Load demo org/app/user/RBAC rows (idempotent)      |
 
+## Contributing
+
+See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for branch workflow, local commands, and **how to configure branch protection** so `main` cannot receive direct pushes without passing CI.
+
 ## License
 
 TBD
