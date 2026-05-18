@@ -7,6 +7,22 @@ on:
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ironclad
+          POSTGRES_PASSWORD: ironclad
+          POSTGRES_DB: ironclad_auth
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ironclad -d ironclad_auth"
+          --health-interval 4s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://ironclad:ironclad@localhost:5432/ironclad_auth
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -17,3 +33,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
