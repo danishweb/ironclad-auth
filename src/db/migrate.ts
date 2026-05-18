@@ -10,7 +10,10 @@ if (!url) {
 	throw new Error("DATABASE_URL is required");
 }
 
-const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), "../../drizzle");
+const migrationsFolder = join(
+	dirname(fileURLToPath(import.meta.url)),
+	"../../drizzle",
+);
 
 const sql = postgres(url, { max: 1 });
 const db = drizzle(sql);
