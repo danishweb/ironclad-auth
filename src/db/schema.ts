@@ -34,6 +34,7 @@ export const providerLinks = pgTable(
 	},
 	(t) => [
 		unique("provider_links_provider_provider_sub_unique").on(t.provider, t.providerSub),
+		index("provider_links_user_id_idx").on(t.userId),
 	],
 );
 
@@ -107,7 +108,10 @@ export const rolePrivileges = pgTable(
 			.references(() => privileges.id, { onDelete: "cascade" })
 			.notNull(),
 	},
-	(t) => [primaryKey({ columns: [t.roleId, t.privilegeId] })],
+	(t) => [
+		primaryKey({ columns: [t.roleId, t.privilegeId] }),
+		index("role_privileges_privilege_id_idx").on(t.privilegeId),
+	],
 );
 
 export const memberships = pgTable(
