@@ -49,3 +49,5 @@ jobs:
       - run: pnpm test
       - run: pnpm exec playwright install chromium --with-deps
       - run: pnpm e2e
+        env:
+          E2E_SKIP_DB_PREP: "1"
