@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { app } from "./app.js";
+import { createApp } from "./app.js";
+
+const app = createApp();
 
 describe("healthz", () => {
 	it("returns ok", async () => {

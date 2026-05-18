@@ -31,7 +31,7 @@ jobs:
           node-version: "22"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
       - run: pnpm lint
       - run: pnpm test
-      - run: pnpm db:migrate
       - run: pnpm db:seed
