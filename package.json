@@ -2,6 +2,7 @@
 	"name": "ironclad-auth",
 	"version": "0.0.0",
 	"private": true,
+	"license": "MIT",
 	"type": "module",
 	"packageManager": "pnpm@9.15.4",
 	"engines": {
