@@ -37,6 +37,7 @@
 		"lint:fix": "biome check --write .",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "tsx src/db/migrate.ts",
-		"db:seed": "tsx src/db/seed.ts"
+		"db:seed": "tsx src/db/seed.ts",
+		"key:rotate": "tsx src/token/rotate-signing-key.ts"
 	}
 }

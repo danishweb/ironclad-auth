@@ -5,8 +5,12 @@ import { createAuth0IdpAdapter } from "./auth/auth0.adapter.js";
 import { loadIdpEnv } from "./auth/idp-env.js";
 import { JwksFetcher } from "./auth/jwks-client.js";
 import { db, listenSql } from "./db/client.js";
-import { loadIroncladTokenEnv } from "./token/ironclad-token-env.js";
-import { createIroncladTokenSigner } from "./token/ironclad-token-signer.js";
+import {
+	createDbIroncladTokenSigner,
+	type IroncladTokenSigner,
+} from "./token/db-ironclad-token-signer.js";
+import { loadIroncladTokenConfig } from "./token/ironclad-token-config.js";
+import { ensureActiveSigningKey } from "./token/signing-keys.js";
 
 const idpEnv = loadIdpEnv();
 const jwks = new JwksFetcher(idpEnv.IDP_JWKS_URI);
@@ -16,11 +20,16 @@ const idp = createAuth0IdpAdapter({
 	getKey: jwks.getKey,
 });
 
-const ironcladTokenEnv = loadIroncladTokenEnv();
-const ironcladToken =
-	ironcladTokenEnv === null
-		? undefined
-		: await createIroncladTokenSigner(ironcladTokenEnv);
+const tokenCfg = loadIroncladTokenConfig();
+let ironcladToken: IroncladTokenSigner | undefined;
+if (tokenCfg) {
+	await ensureActiveSigningKey(db, tokenCfg.KEY_ENCRYPTION_SECRET);
+	ironcladToken = await createDbIroncladTokenSigner(db, {
+		issuer: tokenCfg.IRONCLAD_ISSUER,
+		defaultAudience: tokenCfg.IRONCLAD_TOKEN_AUDIENCE,
+		keyEncryptionSecret: tokenCfg.KEY_ENCRYPTION_SECRET,
+	});
+}
 
 const app = createApp({ db, idp, listenSql, ironcladToken });
 

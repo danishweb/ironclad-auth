@@ -16,5 +16,10 @@
 		"isolatedModules": true
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["src/**/*.test.ts", "src/db/migrate.ts", "src/db/seed.ts"]
+	"exclude": [
+		"src/**/*.test.ts",
+		"src/db/migrate.ts",
+		"src/db/seed.ts",
+		"src/token/rotate-signing-key.ts"
+	]
 }

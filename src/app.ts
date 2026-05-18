@@ -13,14 +13,20 @@ import {
 	createIdpAuthMiddleware,
 	type IdpAuthVariables,
 } from "./middleware/idp-auth.js";
-import type { IroncladTokenSigner } from "./token/ironclad-token-signer.js";
+import type { IroncladTokenSigner } from "./token/db-ironclad-token-signer.js";
+import {
+	buildUserinfoPayload,
+	distinctOrgCodes,
+	listUserPermissionRows,
+	toQualifiedPermissionStrings,
+} from "./token/user-permissions.js";
 
 export type CreateAppOptions = {
 	db: DbClient;
 	idp: IdentityProviderAdapter;
 	/** When set, exposes `GET /v1/events/invalidation` (SSE) backed by `LISTEN auth_invalidate`. */
 	listenSql?: Sql;
-	/** When set with `db` + `idp`, exposes `POST /v1/token/exchange` and `GET /.well-known/jwks.json`. */
+	/** When set with `db` + `idp`, exposes token exchange, userinfo, and JWKS. */
 	ironcladToken?: IroncladTokenSigner;
 };
 
@@ -47,8 +53,8 @@ export function createApp(deps?: CreateAppOptions) {
 
 	if (deps?.ironcladToken) {
 		const ironcladJwks = deps.ironcladToken;
-		app.get("/.well-known/jwks.json", (c) =>
-			c.json(ironcladJwks.getPublicJwks()),
+		app.get("/.well-known/jwks.json", async (c) =>
+			c.json(await ironcladJwks.getPublicJwks()),
 		);
 	}
 
@@ -170,6 +176,47 @@ export function createApp(deps?: CreateAppOptions) {
 
 		if (deps.ironcladToken) {
 			const t = deps.ironcladToken;
+			const applicationsSchema = z.record(
+				z.string(),
+				z.record(z.string(), z.object({ privileges: z.array(z.string()) })),
+			);
+			const userinfoSchema = z.object({
+				sub: z.string().uuid(),
+				idp_sub: z.string(),
+				orgs: z.array(z.string()),
+				applications: applicationsSchema,
+			});
+
+			const userinfoRoute = createRoute({
+				method: "get",
+				path: "/v1/userinfo",
+				tags: ["Token exchange"],
+				summary: "User profile and effective permissions",
+				description:
+					"Returns the internal user id, IdP subject, distinct org codes, and privileges grouped by application and organization.",
+				security: [{ bearerAuth: [] }],
+				responses: {
+					200: {
+						description: "User info",
+						content: {
+							"application/json": {
+								schema: userinfoSchema,
+							},
+						},
+					},
+				},
+			});
+
+			app.openapi(userinfoRoute, async (c) => {
+				const rows = await listUserPermissionRows(deps.db, c.get("userId"));
+				return c.json(
+					buildUserinfoPayload(rows, {
+						sub: c.get("userId"),
+						idpSub: c.get("idpSub"),
+					}),
+				);
+			});
+
 			const tokenExchangeBody = z.object({
 				audience: z.string().min(1).optional(),
 				expiresInSeconds: z
@@ -184,9 +231,9 @@ export function createApp(deps?: CreateAppOptions) {
 				method: "post",
 				path: "/v1/token/exchange",
 				tags: ["Token exchange"],
-				summary: "Mint an Ironclad-signed JWT from a valid IdP access token",
+				summary: "Exchange IdP token for an Ironclad-enriched access token",
 				description:
-					"Accepts the same Bearer IdP token as other `/v1/*` routes. Returns a JWT whose `sub` is the internal user id; verify it with `GET /.well-known/jwks.json`.",
+					"Accepts the same Bearer IdP token as other `/v1/*` routes. Returns a short-lived RS256 JWT (`token`) whose claims include `permissions` and `orgs`, plus the same arrays in the JSON body for convenience. Verify the JWT with `GET /.well-known/jwks.json`.",
 				security: [{ bearerAuth: [] }],
 				request: {
 					body: {
@@ -200,13 +247,14 @@ export function createApp(deps?: CreateAppOptions) {
 				},
 				responses: {
 					200: {
-						description: "Issued access token",
+						description: "Issued enriched token",
 						content: {
 							"application/json": {
 								schema: z.object({
-									access_token: z.string(),
-									token_type: z.literal("Bearer"),
+									token: z.string(),
 									expires_in: z.number().int(),
+									permissions: z.array(z.string()),
+									orgs: z.array(z.string()),
 								}),
 							},
 						},
@@ -224,16 +272,22 @@ export function createApp(deps?: CreateAppOptions) {
 					body.expiresInSeconds !== undefined
 						? body.expiresInSeconds
 						: t.defaultTtlSeconds;
-				const access_token = await t.signAccessToken({
+				const rows = await listUserPermissionRows(deps.db, c.get("userId"));
+				const permissions = toQualifiedPermissionStrings(rows);
+				const orgs = distinctOrgCodes(rows);
+				const token = await t.signEnrichedToken({
 					subject: c.get("userId"),
 					audience,
 					expiresInSeconds: ttl,
 					idpSub: c.get("idpSub"),
+					permissions,
+					orgs,
 				});
 				return c.json({
-					access_token,
-					token_type: "Bearer" as const,
+					token,
 					expires_in: ttl,
+					permissions,
+					orgs,
 				});
 			});
 		}
