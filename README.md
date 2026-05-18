@@ -23,7 +23,7 @@ pnpm dev
 - With IdP env set and the app wired with `db` + `idp` (see `src/index.ts`):
   - `GET /v1/whoami` with `Authorization: Bearer <IdP access token>` returns the linked internal `userId` and IdP `sub`.
   - `POST /v1/authorize` with the same header evaluates RBAC for the token user (or optional `sub` in the JSON body) and returns `{ "allowed": true | false }`. See `/openapi.json` or `/docs` for the full request schema.
-  - When Ironclad signing env is configured, `POST /v1/token/exchange` mints an Ironclad JWT and `GET /.well-known/jwks.json` publishes verification keys (see **Token exchange** below).
+  - When Ironclad signing env is configured (see **Token exchange** below), `POST /v1/token/exchange` mints a short-lived enriched JWT, `GET /v1/userinfo` returns permissions grouped by app/org, and `GET /.well-known/jwks.json` publishes verification keys.
   - When the process is started with a dedicated `listenSql` client, `GET /v1/events/invalidation` exposes **Server-Sent Events** with `auth_invalidate` payloads from Postgres `NOTIFY` (membership-related changes).
 
 ## Identity provider
@@ -34,12 +34,16 @@ Set the three `IDP_*` variables in `.env` (see `.env.example`). On first success
 
 ## Token exchange
 
-When **`IRONCLAD_ISSUER`**, **`IRONCLAD_TOKEN_AUDIENCE`**, and **`IRONCLAD_PRIVATE_KEY_PEM`** (PKCS#8 PEM for RS256) are set together (see `.env.example`), the server also:
+When **`IRONCLAD_ISSUER`**, **`IRONCLAD_TOKEN_AUDIENCE`**, and **`KEY_ENCRYPTION_SECRET`** (16+ characters) are set together (see `.env.example`), the server:
 
-- Publishes **`GET /.well-known/jwks.json`** for verifying minted tokens.
-- Exposes **`POST /v1/token/exchange`** with the same **Bearer IdP** header as `/v1/whoami`. Send JSON (use `{}` if you have no overrides); optional `audience` and `expiresInSeconds` (60–86400). The response is `{ access_token, token_type: "Bearer", expires_in }` where `sub` is the internal user id and `idp_sub` carries the original IdP subject.
+- Bootstraps an **RSA-2048** row in **`signing_keys`** on first startup if none is active, storing the **private key encrypted** (AES-256-GCM envelope) with `KEY_ENCRYPTION_SECRET`.
+- Publishes **`GET /.well-known/jwks.json`** (active public keys).
+- Exposes **`POST /v1/token/exchange`** with the same **Bearer IdP** header as `/v1/whoami`. Send JSON (`{}` is fine); optional `audience` and `expiresInSeconds` (60–3600, default **300**). Response: `{ "token", "expires_in", "permissions", "orgs" }` where `permissions` entries look like `app:org:privilege`. The JWT includes `sub`, `iss`, `aud`, `iat`, `exp`, `jti`, `permissions`, `orgs`, and optional `idp_sub`.
+- Exposes **`GET /v1/userinfo`** with the same Bearer header — returns `sub`, `idp_sub`, `orgs`, and `applications[appCode][orgCode].privileges[]`.
 
-Omit all Ironclad signing variables to run without minting (default in CI and local dev).
+Omit all three variables to run without minting (default when unset).
+
+**Rotate signing key (manual):** `pnpm key:rotate` (uses `DATABASE_URL` + `KEY_ENCRYPTION_SECRET`; deactivates old keys and inserts a new active key — restart consumers if they pin `kid`).
 
 ## Docker
 
@@ -63,6 +67,7 @@ Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. Set 
 | `pnpm db:generate` | Create SQL migrations from `src/db/schema.ts` (dev) |
 | `pnpm db:migrate` | Apply migrations (`DATABASE_URL` required)        |
 | `pnpm db:seed`    | Load demo org/app/user/RBAC rows (idempotent)      |
+| `pnpm key:rotate` | Deactivate prior signing keys and insert a new active RSA key (see README) |
 
 ## Contributing
 

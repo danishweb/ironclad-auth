@@ -64,6 +64,13 @@
       "when": 1779094100000,
       "tag": "0008_auth_invalidate_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779094200000,
+      "tag": "0009_signing_keys_single_active",
+      "breakpoints": true
     }
   ]
 }

@@ -27,7 +27,7 @@ pnpm build
 pnpm test
 ```
 
-Integration tests that need Postgres + migrations are skipped when `DATABASE_URL` is unset; CI always runs them against the service container.
+Integration tests that need Postgres + migrations are skipped when `DATABASE_URL` is unset; CI always runs them against the service container (after `pnpm db:migrate` and `pnpm db:seed`).
 
 ## Pull requests
 
