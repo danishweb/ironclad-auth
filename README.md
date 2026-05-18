@@ -9,6 +9,7 @@ Node 22, TypeScript (strict), Hono, `@hono/zod-openapi`, Drizzle + Postgres (fro
 ## Local dev
 
 ```bash
+cp .env.example .env   # optional; defaults work for PORT
 pnpm install
 pnpm dev
 ```

@@ -5,6 +5,7 @@ describe("healthz", () => {
 	it("returns ok", async () => {
 		const res = await app.request("/healthz");
 		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toMatch(/application\/json/);
 		expect(await res.json()).toEqual({ status: "ok" });
 	});
 });
@@ -19,5 +20,13 @@ describe("openapi", () => {
 		};
 		expect(body.openapi).toBe("3.1.0");
 		expect(body.paths).toHaveProperty("/healthz");
+	});
+});
+
+describe("docs", () => {
+	it("serves swagger ui", async () => {
+		const res = await app.request("/docs");
+		expect(res.status).toBe(200);
+		expect(await res.text()).toContain("swagger");
 	});
 });
