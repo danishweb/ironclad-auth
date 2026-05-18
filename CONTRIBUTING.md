@@ -31,7 +31,7 @@ Integration tests that need Postgres + migrations are skipped when `DATABASE_URL
 
 ## Pull requests
 
-- Open PRs against **`main`** from a **feature branch** (this repo follows `phase-*` names during the phased build; otherwise use `feat/…`, `fix/…`, or similar).
+- Open PRs against **`main`** from a **feature branch** (for example `feat/…`, `fix/…`, or `chore/…`).
 - Keep changes focused; match existing style (Biome formatting, TypeScript strict mode, casual short commit titles without bodies unless needed).
 - Fill in the PR template checklist.
 - Do **not** paste proprietary or private planning content into public PRs; summarize in your own words if you need design context.

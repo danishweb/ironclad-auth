@@ -13,12 +13,15 @@ import {
 	createIdpAuthMiddleware,
 	type IdpAuthVariables,
 } from "./middleware/idp-auth.js";
+import type { IroncladTokenSigner } from "./token/ironclad-token-signer.js";
 
 export type CreateAppOptions = {
 	db: DbClient;
 	idp: IdentityProviderAdapter;
 	/** When set, exposes `GET /v1/events/invalidation` (SSE) backed by `LISTEN auth_invalidate`. */
 	listenSql?: Sql;
+	/** When set with `db` + `idp`, exposes `POST /v1/token/exchange` and `GET /.well-known/jwks.json`. */
+	ironcladToken?: IroncladTokenSigner;
 };
 
 export function createApp(deps?: CreateAppOptions) {
@@ -41,6 +44,13 @@ export function createApp(deps?: CreateAppOptions) {
 	});
 
 	app.openapi(healthzRoute, (c) => c.json({ status: "ok" }));
+
+	if (deps?.ironcladToken) {
+		const ironcladJwks = deps.ironcladToken;
+		app.get("/.well-known/jwks.json", (c) =>
+			c.json(ironcladJwks.getPublicJwks()),
+		);
+	}
 
 	if (deps?.db && deps?.idp) {
 		const authInvalidateHub = deps.listenSql
@@ -157,6 +167,76 @@ export function createApp(deps?: CreateAppOptions) {
 			});
 			return c.json({ allowed });
 		});
+
+		if (deps.ironcladToken) {
+			const t = deps.ironcladToken;
+			const tokenExchangeBody = z.object({
+				audience: z.string().min(1).optional(),
+				expiresInSeconds: z
+					.number()
+					.int()
+					.min(60)
+					.max(t.maxTtlSeconds)
+					.optional(),
+			});
+
+			const tokenExchangeRoute = createRoute({
+				method: "post",
+				path: "/v1/token/exchange",
+				tags: ["Token exchange"],
+				summary: "Mint an Ironclad-signed JWT from a valid IdP access token",
+				description:
+					"Accepts the same Bearer IdP token as other `/v1/*` routes. Returns a JWT whose `sub` is the internal user id; verify it with `GET /.well-known/jwks.json`.",
+				security: [{ bearerAuth: [] }],
+				request: {
+					body: {
+						content: {
+							"application/json": {
+								schema: tokenExchangeBody,
+							},
+						},
+						required: true,
+					},
+				},
+				responses: {
+					200: {
+						description: "Issued access token",
+						content: {
+							"application/json": {
+								schema: z.object({
+									access_token: z.string(),
+									token_type: z.literal("Bearer"),
+									expires_in: z.number().int(),
+								}),
+							},
+						},
+					},
+				},
+			});
+
+			app.openapi(tokenExchangeRoute, async (c) => {
+				const body = c.req.valid("json");
+				const audience =
+					body.audience !== undefined && body.audience.trim().length > 0
+						? body.audience.trim()
+						: t.defaultAudience;
+				const ttl =
+					body.expiresInSeconds !== undefined
+						? body.expiresInSeconds
+						: t.defaultTtlSeconds;
+				const access_token = await t.signAccessToken({
+					subject: c.get("userId"),
+					audience,
+					expiresInSeconds: ttl,
+					idpSub: c.get("idpSub"),
+				});
+				return c.json({
+					access_token,
+					token_type: "Bearer" as const,
+					expires_in: ttl,
+				});
+			});
+		}
 
 		if (authInvalidateHub) {
 			app.get("/v1/events/invalidation", (c) =>
