@@ -1,0 +1,31 @@
+name: Documentation
+description: Suggest README, OpenAPI, or developer-doc improvements
+title: "[Docs]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for gaps or errors in README, `/docs`, OpenAPI, or contributor-facing docs.
+  - type: textarea
+    id: location
+    attributes:
+      label: Where is the problem or gap?
+      description: File path, URL, or screen (e.g. README “Local dev”, `/openapi.json` path).
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What should change?
+      description: Proposed wording, structure, or new section (paste draft if helpful).
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope (optional)
+      options:
+        - label: README
+        - label: OpenAPI / Swagger UI
+        - label: CONTRIBUTING or other repo docs
+        - label: Code comments only

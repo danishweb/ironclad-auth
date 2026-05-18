@@ -20,7 +20,10 @@ pnpm dev
 - Health: `GET http://localhost:3000/healthz`
 - API docs: `http://localhost:3000/docs`
 - OpenAPI JSON: `http://localhost:3000/openapi.json`
-- With IdP env set: `GET http://localhost:3000/v1/whoami` with `Authorization: Bearer <IdP access token>` returns the linked internal `userId` and IdP `sub`.
+- With IdP env set and the app wired with `db` + `idp` (see `src/index.ts`):
+  - `GET /v1/whoami` with `Authorization: Bearer <IdP access token>` returns the linked internal `userId` and IdP `sub`.
+  - `POST /v1/authorize` with the same header evaluates RBAC for the token user (or optional `sub` in the JSON body) and returns `{ "allowed": true | false }`. See `/openapi.json` or `/docs` for the full request schema.
+  - When the process is started with a dedicated `listenSql` client, `GET /v1/events/invalidation` exposes **Server-Sent Events** with `auth_invalidate` payloads from Postgres `NOTIFY` (membership-related changes).
 
 ## Identity provider (Phase 2)
 
@@ -55,6 +58,10 @@ Services: **app** (this API on port 3000) and **Postgres 16** on port 5432. Set 
 
 See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for branch workflow, local commands, and **how to configure branch protection** so `main` cannot receive direct pushes without passing CI.
 
+## Issues
+
+Use this repository’s **Issues** tab on GitHub to report bugs, request features, or suggest documentation updates. Choosing **New issue** offers templates under [`.github/ISSUE_TEMPLATE/`](./.github/ISSUE_TEMPLATE/) (bug report, feature request, documentation). You can still open a blank issue if needed.
+
 ## License
 
-TBD
+This project is licensed under the **MIT License**; see **[LICENSE](./LICENSE)**.
