@@ -5,6 +5,8 @@ import { createAuth0IdpAdapter } from "./auth/auth0.adapter.js";
 import { loadIdpEnv } from "./auth/idp-env.js";
 import { JwksFetcher } from "./auth/jwks-client.js";
 import { db, listenSql } from "./db/client.js";
+import { loadIroncladTokenEnv } from "./token/ironclad-token-env.js";
+import { createIroncladTokenSigner } from "./token/ironclad-token-signer.js";
 
 const idpEnv = loadIdpEnv();
 const jwks = new JwksFetcher(idpEnv.IDP_JWKS_URI);
@@ -14,7 +16,13 @@ const idp = createAuth0IdpAdapter({
 	getKey: jwks.getKey,
 });
 
-const app = createApp({ db, idp, listenSql });
+const ironcladTokenEnv = loadIroncladTokenEnv();
+const ironcladToken =
+	ironcladTokenEnv === null
+		? undefined
+		: await createIroncladTokenSigner(ironcladTokenEnv);
+
+const app = createApp({ db, idp, listenSql, ironcladToken });
 
 const port = Number(process.env.PORT) || 3000;
 
