@@ -14,7 +14,7 @@
 		"@hono/zod-openapi": "^1.4.0",
 		"dotenv": "^17.4.2",
 		"drizzle-orm": "^0.45.2",
-		"hono": "^4.7.4",
+		"hono": "^4.12.26",
 		"jose": "^6.2.3",
 		"postgres": "^3.4.9",
 		"zod": "^4.4.3"
