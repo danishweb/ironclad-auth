@@ -45,18 +45,8 @@ describe.skipIf(!hasDb)("IdP integration (database)", () => {
 	it("creates then reuses a user for the same IdP subject", async () => {
 		const sub = `auth0|${randomUUID()}`;
 		const email = `flow-${randomUUID()}@example.com`;
-		const first = await resolveOrCreateUser(
-			db,
-			"auth0",
-			sub,
-			email,
-		);
-		const second = await resolveOrCreateUser(
-			db,
-			"auth0",
-			sub,
-			email,
-		);
+		const first = await resolveOrCreateUser(db, "auth0", sub, email);
+		const second = await resolveOrCreateUser(db, "auth0", sub, email);
 		expect(second.userId).toBe(first.userId);
 	});
 
@@ -90,4 +80,3 @@ describe.skipIf(!hasDb)("IdP integration (database)", () => {
 		);
 	});
 });
-

@@ -1,8 +1,8 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { streamSSE } from "hono/streaming";
-import { adminRouter } from "./admin.js";
 import type { Sql } from "postgres";
+import { adminRouter } from "./admin.js";
 import type { IdentityProviderAdapter } from "./auth/idp.types.js";
 import type { DbClient } from "./auth/resolve-user.js";
 import { createAuthInvalidateHub } from "./authorization/auth-invalidate-hub.js";
@@ -32,7 +32,9 @@ export type CreateAppOptions = {
 };
 
 export function createApp(deps?: CreateAppOptions) {
-	const app = new OpenAPIHono<{ Variables: IdpAuthVariables & { db: DbClient } }>();
+	const app = new OpenAPIHono<{
+		Variables: IdpAuthVariables & { db: DbClient };
+	}>();
 
 	const healthzRoute = createRoute({
 		method: "get",
