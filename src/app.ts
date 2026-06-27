@@ -32,7 +32,7 @@ export type CreateAppOptions = {
 };
 
 export function createApp(deps?: CreateAppOptions) {
-	const app = new OpenAPIHono<{ Variables: IdpAuthVariables }>();
+	const app = new OpenAPIHono<{ Variables: IdpAuthVariables & { db: DbClient } }>();
 
 	const healthzRoute = createRoute({
 		method: "get",

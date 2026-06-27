@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { count, eq } from "drizzle-orm";
-import type { DbClient } from "./db/client.js";
+import type { DbClient } from "./auth/resolve-user.js";
 import { apps, orgs, users, memberships, appsOrgs, roles, privileges, rolePrivileges } from "./db/schema.js";
 
 type Env = {
