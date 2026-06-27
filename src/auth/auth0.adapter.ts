@@ -19,9 +19,10 @@ export function createAuth0IdpAdapter(options: {
 			if (typeof payload.sub !== "string" || payload.sub.length === 0) {
 				throw new Error("IdP token missing sub");
 			}
+			const rawEmail = payload.email || payload["https://ironclad.local/email"];
 			const email =
-				typeof payload.email === "string" && payload.email.length > 0
-					? payload.email
+				typeof rawEmail === "string" && rawEmail.length > 0
+					? rawEmail
 					: undefined;
 			return { sub: payload.sub, email };
 		},

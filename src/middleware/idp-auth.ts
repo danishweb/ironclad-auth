@@ -6,6 +6,7 @@ import { type DbClient, resolveOrCreateUser } from "../auth/resolve-user.js";
 export type IdpAuthVariables = {
 	userId: string;
 	idpSub: string;
+	email?: string;
 };
 
 export function createIdpAuthMiddleware(deps: {
@@ -32,6 +33,7 @@ export function createIdpAuthMiddleware(deps: {
 			);
 			c.set("userId", userId);
 			c.set("idpSub", claims.sub);
+			if (claims.email) c.set("email", claims.email);
 			await next();
 		} catch (e) {
 			if (e instanceof errors.JWTExpired) {
