@@ -16,10 +16,15 @@ export const adminRouter = new Hono<Env>();
 
 // Basic Admin Security
 adminRouter.use("*", async (c, next) => {
-	const email = c.get("email");
-	const adminEmails = process.env.ADMIN_EMAILS;
-	if (adminEmails && (!email || !adminEmails.split(",").map(e => e.trim()).includes(email))) {
-		return c.json({ error: "Forbidden" }, 403);
+	const { evaluateAuthorization } = await import("./authorization/evaluate-authorization.js");
+	const allowed = await evaluateAuthorization(c.get("db"), {
+		principalUserId: c.get("userId"),
+		app: "ironclad-admin",
+		org: "system",
+		privilege: "manage:platform",
+	});
+	if (!allowed) {
+		return c.json({ error: "Forbidden: Requires manage:platform privilege" }, 403);
 	}
 	await next();
 });
