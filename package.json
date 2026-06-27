@@ -20,11 +20,11 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.15",
+		"@biomejs/biome": "^2.5.0",
 		"@playwright/test": "^1.60.0",
 		"@types/node": "^25.8.0",
 		"drizzle-kit": "^0.31.10",
-		"tsx": "^4.19.2",
+		"tsx": "^4.22.4",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.6"
 	},
