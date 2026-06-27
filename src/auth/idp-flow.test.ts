@@ -44,17 +44,18 @@ describe.skipIf(!hasDb)("IdP integration (database)", () => {
 
 	it("creates then reuses a user for the same IdP subject", async () => {
 		const sub = `auth0|${randomUUID()}`;
+		const email = `flow-${randomUUID()}@example.com`;
 		const first = await resolveOrCreateUser(
 			db,
 			"auth0",
 			sub,
-			"flow@example.com",
+			email,
 		);
 		const second = await resolveOrCreateUser(
 			db,
 			"auth0",
 			sub,
-			"flow@example.com",
+			email,
 		);
 		expect(second.userId).toBe(first.userId);
 	});
@@ -67,14 +68,26 @@ describe.skipIf(!hasDb)("IdP integration (database)", () => {
 
 	it("returns user mapping from whoami with a valid bearer token", async () => {
 		const app = createApp({ db, idp: adapter });
+		const uniqueSub = `auth0|${randomUUID()}`;
+		const uniqueEmail = `whoami-${randomUUID()}@example.com`;
+		const uniqueToken = await new SignJWT({ email: uniqueEmail })
+			.setProtectedHeader({ alg: "RS256", kid })
+			.setIssuer(issuer)
+			.setAudience(audience)
+			.setSubject(uniqueSub)
+			.setIssuedAt()
+			.setExpirationTime("10m")
+			.sign(privateKey);
+
 		const res = await app.request("/v1/whoami", {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: { Authorization: `Bearer ${uniqueToken}` },
 		});
 		expect(res.status).toBe(200);
 		const body = (await res.json()) as { userId: string; idpSub: string };
-		expect(body.idpSub).toMatch(/^auth0\|[0-9a-f-]+$/i);
+		expect(body.idpSub).toBe(uniqueSub);
 		expect(body.userId).toMatch(
 			/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
 		);
 	});
 });
+

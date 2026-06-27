@@ -1,6 +1,7 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { streamSSE } from "hono/streaming";
+import { adminRouter } from "./admin.js";
 import type { Sql } from "postgres";
 import type { IdentityProviderAdapter } from "./auth/idp.types.js";
 import type { DbClient } from "./auth/resolve-user.js";
@@ -70,6 +71,13 @@ export function createApp(deps?: CreateAppOptions) {
 		});
 
 		app.use("/v1/*", createIdpAuthMiddleware({ db: deps.db, idp: deps.idp }));
+
+		// Mount Admin API
+		app.use("/v1/admin/*", async (c, next) => {
+			c.set("db", deps.db as any);
+			await next();
+		});
+		app.route("/v1/admin", adminRouter as any);
 
 		const whoamiRoute = createRoute({
 			method: "get",
